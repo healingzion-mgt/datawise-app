@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DataWise — Take Control. Save Data. Spend Smarter.</title>
+<meta name="description" content="Smart data and airtime manager — track usage, budget your data, manage airtime, and decide if a download is worth it.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1128">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --navy:#0a1128; --navy2:#101a3a; --navy3:#152246;
+  --gold:#d4af37; --gold-light:#f0d878;
+  --white:#ffffff; --bg:#f5f6fa; --card:#ffffff; --fg:#141b2d; --muted:#6b7280;
+  --green:#1e8e58; --green-bg:#e6f6ee;
+  --orange:#c9711b; --orange-bg:#fdf1e3;
+  --red:#c13b3b; --red-bg:#fbe9e9;
+  --border:#e4e7ee;
+  --radius:16px;
+}
+:root[data-theme="dark"]{
+  --bg:#070b17; --card:#101a3a; --fg:#f2f4fa; --muted:#9aa4c0; --border:#1f2a4d;
+  --green-bg:#0f2a1e; --orange-bg:#2c2010; --red-bg:#2c1414;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:block;}
+.hidden{display:none !important;}
+
+/* SPLASH */
+#splash{background:linear-gradient(160deg,var(--navy),var(--navy2));flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#fff;}
+#splash.active{display:flex;}
+.logo-mark{width:84px;height:84px;border-radius:22px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:var(--navy);margin-bottom:18px;box-shadow:0 10px 30px rgba(212,175,55,.35);}
+.splash-title{font-size:26px;font-weight:800;letter-spacing:.5px;}
+.splash-tag{font-size:13px;color:var(--gold-light);margin-top:8px;}
+
+/* ONBOARDING */
+#onboarding{padding:32px 24px;min-height:100vh;flex-direction:column;background:var(--bg);}
+#onboarding.active{display:flex;}
+.ob-slide{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.ob-slide.active{display:flex;}
+.ob-icon{font-size:56px;margin-bottom:20px;}
+.ob-title{font-size:21px;font-weight:800;margin-bottom:10px;}
+.ob-desc{font-size:14px;color:var(--muted);max-width:320px;line-height:1.5;}
+.ob-dots{display:flex;gap:7px;justify-content:center;margin:20px 0;}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+.ob-dot.active{background:var(--gold);width:20px;border-radius:4px;}
+.ob-actions{display:flex;justify-content:space-between;align-items:center;}
+
+/* AUTH */
+#auth{min-height:100vh;background:linear-gradient(170deg,var(--navy),var(--navy2));padding:40px 24px;color:#fff;}
+.auth-card{background:var(--card);color:var(--fg);border-radius:20px;padding:26px;margin-top:20px;}
+.auth-tabs{display:flex;gap:8px;margin-bottom:18px;}
+.auth-tab{flex:1;text-align:center;padding:10px;border-radius:10px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;}
+.auth-tab.active{background:var(--navy);color:#fff;}
+input,select{width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--fg);font-size:14px;margin-bottom:12px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 18px;border-radius:12px;border:none;font-weight:800;font-size:14px;cursor:pointer;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);}
+.btn-navy{background:var(--navy);color:#fff;}
+.btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--border);}
+.btn-block{width:100%;}
+.auth-err{color:var(--red);font-size:12px;margin-bottom:10px;display:none;}
+
+/* APP SHELL */
+#app{display:none;min-height:100vh;padding-bottom:78px;}
+#app.active{display:block;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px;}
+.topbar h1{font-size:18px;font-weight:800;}
+.icon-btn{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:var(--fg);}
+.view{display:none;padding:6px 20px 24px;}
+.view.active{display:block;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
+.card h3{font-size:14px;font-weight:800;margin-bottom:10px;}
+.card .hint{font-size:12px;color:var(--muted);margin-top:6px;}
+
+.ring-wrap{display:flex;align-items:center;gap:18px;}
+.ring{width:100px;height:100px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--pct,0)*1%), var(--border) 0);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ring-inner{width:76px;height:76px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-inner b{font-size:16px;}
+.ring-inner span{font-size:10px;color:var(--muted);}
+
+.stat-row{display:flex;gap:10px;}
+.stat{flex:1;background:var(--bg);border-radius:12px;padding:12px;text-align:center;}
+.stat b{display:block;font-size:17px;}
+.stat span{font-size:11px;color:var(--muted);}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:800;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-orange{background:var(--orange-bg);color:var(--orange);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:10px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.bar{width:100%;max-width:26px;background:linear-gradient(180deg,var(--gold-light),var(--gold));border-radius:6px 6px 2px 2px;}
+.bar-label{font-size:9px;color:var(--muted);margin-top:4px;}
+
+.progress{height:9px;border-radius:5px;background:var(--border);overflow:hidden;margin-top:8px;}
+.progress > div{height:100%;background:var(--gold);}
+.progress.warn > div{background:var(--orange);}
+.progress.danger > div{background:var(--red);}
+
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.list-row:last-child{border-bottom:none;}
+.list-row .l-title{font-weight:700;}
+.list-row .l-sub{color:var(--muted);font-size:11px;}
+
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.chip{padding:8px 13px;border-radius:999px;border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);color:var(--fg);}
+.chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+.result-box{margin-top:14px;padding:14px;border-radius:12px;font-size:13px;font-weight:700;}
+.result-go{background:var(--green-bg);color:var(--green);}
+.result-wait{background:var(--orange-bg);color:var(--orange);}
+.result-no{background:var(--red-bg);color:var(--red);}
+
+.banner-note{background:var(--orange-bg);color:var(--orange);border-radius:12px;padding:11px 13px;font-size:11.5px;line-height:1.5;margin-bottom:14px;}
+
+.toggle{position:relative;width:44px;height:25px;border-radius:14px;background:var(--border);cursor:pointer;flex-shrink:0;}
+.toggle.on{background:var(--gold);}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.15s;}
+.toggle.on::after{left:21px;}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-row .s-title{font-size:13px;font-weight:700;}
+.setting-row .s-sub{font-size:11px;color:var(--muted);}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:50;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-size:10px;font-weight:700;padding:6px 0;cursor:pointer;}
+.nav-btn .ic{font-size:19px;}
+.nav-btn.active{color:var(--gold);}
+
+.fab-add{position:fixed;bottom:92px;right:20px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);border:none;font-size:24px;font-weight:900;box-shadow:0 8px 20px rgba(212,175,55,.4);cursor:pointer;z-index:40;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:100;}
+.modal-backdrop.active{display:flex;}
+.modal{background:var(--card);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px;max-height:85vh;overflow-y:auto;}
+.modal h3{font-size:16px;font-weight:800;margin-bottom:14px;}
+.modal-close{float:right;background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;}
+
+.empty-note{text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash" class="screen active">
+  <div class="logo-mark">DW</div>
+  <div class="splash-title">DataWise</div>
+  <div class="splash-tag">Take Control. Save Data. Spend Smarter.</div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboarding" class="screen">
+  <div class="ob-slide active" data-slide="0">
+    <div class="ob-icon">📊</div>
+    <div class="ob-title">Know exactly where it goes</div>
+    <div class="ob-desc">Track your data and airtime, see what's eating your subscription, and stop guessing.</div>
+  </div>
+  <div class="ob-slide" data-slide="1">
+    <div class="ob-icon">📥</div>
+    <div class="ob-title">Decide before you download</div>
+    <div class="ob-desc">Check if a download is worth your remaining data before it's gone — or wait for Wi-Fi.</div>
+  </div>
+  <div class="ob-slide" data-slide="2">
+    <div class="ob-icon">🛡️</div>
+    <div class="ob-title">Budget it, protect it</div>
+    <div class="ob-desc">Set daily, weekly and monthly limits, and get warned before you run out.</div>
+  </div>
+  <div class="ob-dots"><div class="ob-dot active"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
+  <div class="ob-actions">
+    <button class="btn btn-ghost" onclick="skipOnboarding()">Skip</button>
+    <button class="btn btn-gold" onclick="nextOnboarding()" id="obNextBtn">Next</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="auth" class="screen">
+  <div style="text-align:center;">
+    <div class="logo-mark" style="margin:0 auto 14px;">DW</div>
+    <div style="font-size:20px;font-weight:800;">DataWise</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="setAuthTab('login')">Log In</div>
+      <div class="auth-tab" id="tabRegister" onclick="setAuthTab('register')">Register</div>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+
+    <div id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button class="btn btn-navy btn-block" onclick="doLogin()">Log In</button>
+    </div>
+
+    <div id="registerForm" class="hidden">
+      <input type="text" id="regName" placeholder="Your name">
+      <input type="email" id="regEmail" placeholder="Email">
+      <input type="password" id="regPassword" placeholder="Create a password">
+      <button class="btn btn-navy btn-block" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="topbar">
+      <h1 id="greeting">Hello 👋</h1>
+      <button class="icon-btn" onclick="toggleTheme()">🌓</button>
+    </div>
+
+    <div class="banner-note" id="emergencyBanner" style="display:none;">
+      ⚠️ Emergency Data Mode is ON — try to avoid videos, auto-updates and background downloads until your next top-up.
+    </div>
+
+    <div class="card">
+      <h3>Remaining Data</h3>
+      <div class="ring-wrap">
+        <div class="ring" id="dataRing" style="--pct:0;">
+          <div class="ring-inner"><b id="dataRingPct">0%</b><span>left</span></div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:20px;font-weight:800;" id="dataRemainingText">— MB left</div>
+          <div class="hint" id="dataPlanText">No active plan set</div>
+        </div>
+      </div>
+      <div class="stat-row" style="margin-top:14px;">
+        <div class="stat"><b id="statToday">0</b><span>Today (MB)</span></div>
+        <div class="stat"><b id="statWeek">0</b><span>This Week</span></div>
+        <div class="stat"><b id="statMonth">0</b><span>This Month</span></div>
+      </div>
+      <div class="hint">This is based on what you log — DataWise can't read background app usage from a web app, so keep logging for accurate numbers.</div>
+    </div>
+
+    <div class="card">
+      <h3>Airtime Balance (estimated)</h3>
+      <div style="font-size:24px;font-weight:800;" id="airtimeBalanceText">₦0</div>
+      <div class="hint" id="airtimeSpendText">₦0 spent this month</div>
+      <div class="hint">Estimated from what you've logged — not a verified network balance.</div>
+    </div>
+
+    <div class="card">
+      <h3>Last 7 Days</h3>
+      <div class="bar-chart" id="weekChart"></div>
+    </div>
+
+    <div class="card">
+      <h3>Subscription</h3>
+      <div id="subBox" class="empty-note">No active plan yet — add one in Network Settings (More tab).</div>
+    </div>
+  </div>
+
+  <!-- GUARDIAN (Data Guardian + Download Assistant + Wi-Fi tips + Hotspot) -->
+  <div class="view" id="view-guardian">
+    <div class="topbar"><h1>Data Guardian</h1></div>
+
+    <div class="banner-note">A web app can't see other apps' background data use on your phone — this section works from what you tell it, plus smart estimates, so it's a guide, not a live monitor.</div>
+
+    <div class="card">
+      <h3>📥 Smart Download Assistant</h3>
+      <div class="hint">Pick what you're about to download:</div>
+      <div class="chip-row" id="downloadChips">
+        <div class="chip" data-mb="30">Social video (~30MB)</div>
+        <div class="chip" data-mb="150">App update (~150MB)</div>
+        <div class="chip" data-mb="600">Movie (SD, ~600MB)</div>
+        <div class="chip" data-mb="1500">Movie (HD, ~1.5GB)</div>
+        <div class="chip" data-mb="3000">Software update (~3GB)</div>
+      </div>
+      <input type="number" id="customMb" placeholder="Or enter size in MB" style="margin-top:10px;">
+      <button class="btn btn-navy btn-block" onclick="checkDownload()">Check if it's worth it</button>
+      <div id="downloadResult"></div>
+    </div>
+
+    <div class="card">
+      <h3>📶 Wi-Fi Intelligence</h3>
+      <div class="hint">Quick rule of thumb: if you're near a trusted Wi-Fi (home, office, church), switch to it for anything above ~100MB — videos, updates, backups.</div>
+    </div>
+
+    <div class="card">
+      <h3>🔥 Hotspot Monitor</h3>
+      <div class="hint">Log a hotspot session to track how much it costs you:</div>
+      <input type="number" id="hsDevices" placeholder="Devices connected">
+      <input type="number" id="hsMinutes" placeholder="Duration (minutes)">
+      <input type="number" id="hsMb" placeholder="Data used (MB), if known">
+      <button class="btn btn-ghost btn-block" onclick="logHotspot()">Log Hotspot Session</button>
+    </div>
+
+    <div class="card">
+      <h3>🛑 Emergency Data Mode</h3>
+      <div class="setting-row">
+        <div><div class="s-title">Turn on Emergency Mode</div><div class="s-sub">Shows reminders to cut non-essential use when data is low</div></div>
+        <div class="toggle" id="emergencyToggle" onclick="toggleEmergency()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AIRTIME -->
+  <div class="view" id="view-airtime">
+    <div class="topbar"><h1>Airtime Manager</h1></div>
+
+    <div class="card">
+      <h3>Log a Top-Up or Spend</h3>
+      <div class="chip-row">
+        <div class="chip active" id="chipTopup" onclick="setAirtimeType('topup')">Top-Up</div>
+        <div class="chip" id="chipSpend" onclick="setAirtimeType('spend')">Spend (call/SMS)</div>
+      </div>
+      <select id="airtimeNetwork">
+        <option>MTN</option><option>Airtel</option><option>Glo</option><option>9mobile</option>
+      </select>
+      <input type="number" id="airtimeAmount" placeholder="Amount (₦)">
+      <input type="text" id="airtimeNote" placeholder="Note (optional)">
+      <button class="btn btn-navy btn-block" onclick="logAirtime()">Save</button>
+    </div>
+
+    <div class="card">
+      <h3>Recent Activity</h3>
+      <div id="airtimeList" class="empty-note">No airtime logged yet.</div>
+    </div>
+  </div>
+
+  <!-- BUDGET (+ History) -->
+  <div class="view" id="view-budget">
+    <div class="topbar"><h1>Budget Planner</h1></div>
+
+    <div class="card">
+      <h3>Data Limits (MB)</h3>
+      <input type="number" id="budgetDailyData" placeholder="Daily limit">
+      <input type="number" id="budgetWeeklyData" placeholder="Weekly limit">
+      <input type="number" id="budgetMonthlyData" placeholder="Monthly limit">
+      <h3 style="margin-top:14px;">Airtime Limits (₦)</h3>
+      <input type="number" id="budgetDailyAirtime" placeholder="Daily limit">
+      <input type="number" id="budgetWeeklyAirtime" placeholder="Weekly limit">
+      <input type="number" id="budgetMonthlyAirtime" placeholder="Monthly limit">
+      <button class="btn btn-gold btn-block" onclick="saveBudget()">Save Budget</button>
+    </div>
+
+    <div class="card">
+      <h3>Progress</h3>
+      <div class="hint">Today's data vs daily limit</div>
+      <div class="progress" id="progDaily"><div style="width:0%"></div></div>
+    </div>
+
+    <div class="card">
+      <h3>Data History</h3>
+      <div id="historyList" class="empty-note">No data logged yet.</div>
+    </div>
+  </div>
+
+  <!-- MORE (Notifications, Network, Profile, Privacy, Help) -->
+  <div class="view" id="view-more">
+    <div class="topbar"><h1>More</h1></div>
+
+    <div class="card">
+      <h3>👤 Profile</h3>
+      <div id="profileName" style="font-weight:700;"></div>
+      <div id="profileEmail" class="hint"></div>
+      <button class="btn btn-ghost btn-block" style="margin-top:12px;" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="card">
+      <h3>📡 Network / Subscription Settings</h3>
+      <select id="netNetwork"><option>MTN</option><option>Airtel</option><option>Glo</option><option>9mobile</option></select>
+      <input type="text" id="netPlanName" placeholder="Plan name (e.g. 10GB Monthly)">
+      <input type="number" id="netPlanCost" placeholder="Plan cost (₦)">
+      <div class="setting-row" style="padding:4px 0;">
+        <div class="s-title">Unlimited plan</div>
+        <div class="toggle" id="netUnlimitedToggle" onclick="toggleUnlimited()"></div>
+      </div>
+      <input type="number" id="netDataTotal" placeholder="Total data allowance (MB)">
+      <input type="date" id="netStartDate">
+      <input type="date" id="netEndDate">
+      <button class="btn btn-navy btn-block" onclick="saveSubscription()">Save Plan</button>
+    </div>
+
+    <div class="card">
+      <h3>🔔 Notifications</h3>
+      <div class="setting-row"><div class="s-title">Low data alert</div><div class="toggle" id="notifLowData" onclick="toggleSetting('notif_low_data')"></div></div>
+      <div class="setting-row"><div class="s-title">Low airtime alert</div><div class="toggle" id="notifLowAirtime" onclick="toggleSetting('notif_low_airtime')"></div></div>
+      <div class="setting-row"><div class="s-title">Subscription expiring</div><div class="toggle" id="notifSubscription" onclick="toggleSetting('notif_subscription')"></div></div>
+      <div class="hint">Browser notifications work while DataWise is installed and open; we'll ask permission the first time one is needed.</div>
+    </div>
+
+    <div class="card">
+      <h3>🔒 Privacy</h3>
+      <div class="hint">DataWise only stores what you log yourself — your subscription details, data entries and airtime entries. We never read other apps on your device or access your real carrier balance; numbers you see as "estimated" come from your own entries, not a live network connection.</div>
+    </div>
+
+    <div class="card">
+      <h3>❓ Help</h3>
+      <div class="hint">Log your usage right after you notice it (e.g. after a big download) for the most accurate dashboard. Set a budget so DataWise can warn you before you run low.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav hidden" id="bottomNav">
+  <button class="nav-btn active" data-view="dashboard" onclick="switchView('dashboard')"><span class="ic">🏠</span>Dashboard</button>
+  <button class="nav-btn" data-view="guardian" onclick="switchView('guardian')"><span class="ic">🛡️</span>Guardian</button>
+  <button class="nav-btn" data-view="airtime" onclick="switchView('airtime')"><span class="ic">📞</span>Airtime</button>
+  <button class="nav-btn" data-view="budget" onclick="switchView('budget')"><span class="ic">📈</span>Budget</button>
+  <button class="nav-btn" data-view="more" onclick="switchView('more')"><span class="ic">⚙️</span>More</button>
+</div>
+
+<button class="fab-add hidden" id="fabAdd" onclick="openQuickAdd()">+</button>
+
+<!-- Quick add modal -->
+<div class="modal-backdrop" id="quickAddModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeQuickAdd()">✕</button>
+    <h3>Log Data Usage</h3>
+    <input type="text" id="qaApp" placeholder="What was it? (e.g. YouTube, WhatsApp)">
+    <input type="number" id="qaMb" placeholder="MB used">
+    <button class="btn btn-gold btn-block" onclick="quickAddSave()">Save</button>
+  </div>
+</div>
+
+<script>
+const API = "/api";
+let state = { token: localStorage.getItem("dw_token") || null, user: null, settings: null };
+
+function qs(id){ return document.getElementById(id); }
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  qs(id).classList.add("active");
+}
+
+async function api(path, method, body){
+  const url = API + path + (state.token ? (path.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(state.token) : "");
+  const opts = { method: method || "GET", headers: {} };
+  if(body){ opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const res = await fetch(url, opts);
+  return res.json();
+}
+
+/* ---------- SPLASH / ONBOARDING ---------- */
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    if(state.token){
+      enterApp();
+    } else if(localStorage.getItem("dw_onboarded")){
+      showScreen("auth");
+    } else {
+      showScreen("onboarding");
+    }
+  }, 1400);
+});
+
+let obIndex = 0;
+function nextOnboarding(){
+  const slides = document.querySelectorAll(".ob-slide");
+  const dots = document.querySelectorAll(".ob-dot");
+  if(obIndex < slides.length - 1){
+    slides[obIndex].classList.remove("active");
+    dots[obIndex].classList.remove("active");
+    obIndex++;
+    slides[obIndex].classList.add("active");
+    dots[obIndex].classList.add("active");
+    if(obIndex === slides.length - 1) qs("obNextBtn").textContent = "Get Started";
+  } else {
+    skipOnboarding();
+  }
+}
+function skipOnboarding(){
+  localStorage.setItem("dw_onboarded", "1");
+  showScreen("auth");
+}
+
+/* ---------- AUTH ---------- */
+function setAuthTab(tab){
+  qs("tabLogin").classList.toggle("active", tab === "login");
+  qs("tabRegister").classList.toggle("active", tab === "register");
+  qs("loginForm").classList.toggle("hidden", tab !== "login");
+  qs("registerForm").classList.toggle("hidden", tab !== "register");
+  qs("authErr").style.display = "none";
+}
+function authError(msg){
+  const e = qs("authErr"); e.textContent = msg; e.style.display = "block";
+}
+async function doLogin(){
+  const email = qs("loginEmail").value.trim();
+  const password = qs("loginPassword").value;
+  if(!email || !password) return authError("Enter your email and password.");
+  const r = await api("/login", "POST", { email, password });
+  if(!r.ok) return authError(r.error || "Login failed.");
+  state.token = r.token; state.user = r.user;
+  localStorage.setItem("dw_token", r.token);
+  localStorage.setItem("dw_onboarded", "1");
+  enterApp();
+}
+async function doRegister(){
+  const name = qs("regName").value.trim();
+  const email = qs("regEmail").value.trim();
+  const password = qs("regPassword").value;
+  if(!email || !password) return authError("Enter an email and password.");
+  const r = await api("/signup", "POST", { email, password, name });
+  if(!r.ok) return authError(r.error || "Could not create account.");
+  state.token = r.token; state.user = r.user;
+  localStorage.setItem("dw_token", r.token);
+  localStorage.setItem("dw_onboarded", "1");
+  enterApp();
+}
+function logout(){
+  localStorage.removeItem("dw_token");
+  state.token = null;
+  qs("app").classList.remove("active");
+  qs("bottomNav").classList.add("hidden");
+  qs("fabAdd").classList.add("hidden");
+  showScreen("auth");
+}
+
+/* ---------- APP SHELL ---------- */
+async function enterApp(){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  qs("app").classList.add("active");
+  qs("bottomNav").classList.remove("hidden");
+  qs("fabAdd").classList.remove("hidden");
+  await loadDashboard();
+}
+
+function switchView(name){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  qs("view-" + name).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  if(name === "airtime") loadAirtime();
+  if(name === "budget") loadBudgetView();
+  if(name === "more") loadMore();
+}
+
+function toggleTheme(){
+  const root = document.documentElement;
+  const isDark = root.getAttribute("data-theme") === "dark";
+  root.setAttribute("data-theme", isDark ? "light" : "dark");
+  localStorage.setItem("dw_theme", isDark ? "light" : "dark");
+}
+(function initTheme(){
+  const saved = localStorage.getItem("dw_theme");
+  if(saved) document.documentElement.setAttribute("data-theme", saved);
+})();
+
+/* ---------- DASHBOARD ---------- */
+async function loadDashboard(){
+  const r = await api("/summary");
+  if(!r.ok) return;
+  state.settings = r.settings;
+
+  qs("greeting").textContent = "Hello" + (state.user && state.user.name ? ", " + state.user.name.split(" ")[0] : "") + " 👋";
+
+  const sub = r.subscription;
+  let pct = 0, remainingText = "— MB left", planText = "No active plan set";
+  if(sub){
+    if(sub.is_unlimited){
+      pct = 100; remainingText = "Unlimited"; planText = (sub.plan_name || sub.network) + " · Unlimited";
+    } else {
+      const total = sub.data_total_mb || 0;
+      const used = sub.data_used_mb || 0;
+      const remaining = Math.max(0, total - used);
+      pct = total > 0 ? Math.min(100, Math.round((remaining/total)*100)) : 0;
+      remainingText = formatMb(remaining) + " left";
+      planText = (sub.plan_name || sub.network) + (sub.end_date ? " · expires " + sub.end_date : "");
+    }
+    qs("subBox").innerHTML =
+      '<div class="list-row"><div><div class="l-title">'+esc(sub.plan_name || sub.network)+'</div><div class="l-sub">'+esc(sub.network)+' · ₦'+ (sub.plan_cost||0) +'</div></div>'+
+      '<div class="badge badge-green">Active</div></div>';
+  } else {
+    qs("subBox").innerHTML = '<div class="empty-note">No active plan yet — add one in Network Settings (More tab).</div>';
+  }
+  qs("dataRing").style.setProperty("--pct", pct);
+  qs("dataRingPct").textContent = pct + "%";
+  qs("dataRemainingText").textContent = remainingText;
+  qs("dataPlanText").textContent = planText;
+
+  qs("statToday").textContent = formatMb(r.usage.today_mb);
+  qs("statWeek").textContent = formatMb(r.usage.week_mb);
+  qs("statMonth").textContent = formatMb(r.usage.month_mb);
+
+  qs("airtimeBalanceText").textContent = "₦" + (r.airtime.estimated_balance || 0).toLocaleString();
+  qs("airtimeSpendText").textContent = "₦" + (r.airtime.month_spend || 0).toLocaleString() + " spent this month";
+
+  renderWeekChart(r.usage.last7 || []);
+
+  const emergencyOn = r.settings && r.settings.emergency_mode;
+  qs("emergencyBanner").style.display = emergencyOn ? "block" : "none";
+  qs("emergencyToggle").classList.toggle("on", !!emergencyOn);
+  updateBudgetToggles(r.settings);
+
+  if(r.budget){
+    fillBudgetForm(r.budget);
+    updateDailyProgress(r.usage.today_mb, r.budget.daily_data_mb);
+  }
+}
+
+function formatMb(mb){
+  mb = mb || 0;
+  if(mb >= 1024) return (mb/1024).toFixed(1) + "GB";
+  return Math.round(mb) + "MB";
+}
+function esc(v){ return (v===null||v===undefined) ? "" : String(v).replace(/</g,"&lt;"); }
+
+function renderWeekChart(days){
+  const el = qs("weekChart");
+  if(!days.length){ el.innerHTML = '<div class="empty-note">No usage logged yet this week.</div>'; return; }
+  const max = Math.max(...days.map(d => d.mb), 1);
+  el.innerHTML = days.map(d => {
+    const h = Math.max(4, Math.round((d.mb/max)*80));
+    const label = new Date(d.day).toLocaleDateString(undefined,{weekday:'short'});
+    return '<div class="bar-col"><div class="bar" style="height:'+h+'px;"></div><div class="bar-label">'+label+'</div></div>';
+  }).join("");
+}
+
+/* ---------- QUICK ADD (data log) ---------- */
+function openQuickAdd(){ qs("quickAddModal").classList.add("active"); }
+function closeQuickAdd(){ qs("quickAddModal").classList.remove("active"); qs("qaApp").value=""; qs("qaMb").value=""; }
+async function quickAddSave(){
+  const mb = Number(qs("qaMb").value);
+  if(!mb || mb <= 0) return;
+  await api("/data", "POST", { app_name: qs("qaApp").value.trim() || null, mb_used: mb });
+  closeQuickAdd();
+  loadDashboard();
+  if(document.getElementById("view-budget").classList.contains("active")) loadBudgetView();
+}
+
+/* ---------- GUARDIAN ---------- */
+document.addEventListener("click", (e) => {
+  if(e.target.closest("#downloadChips .chip")){
+    document.querySelectorAll("#downloadChips .chip").forEach(c => c.classList.remove("active"));
+    e.target.closest(".chip").classList.add("active");
+    qs("customMb").value = e.target.closest(".chip").dataset.mb;
+  }
+});
+async function checkDownload(){
+  const mb = Number(qs("customMb").value);
+  const box = qs("downloadResult");
+  if(!mb || mb <= 0){ box.innerHTML = ""; return; }
+  const r = await api("/summary");
+  const sub = r.subscription;
+  let remaining = null;
+  if(sub && !sub.is_unlimited){
+    remaining = Math.max(0, (sub.data_total_mb||0) - (sub.data_used_mb||0));
+  }
+  let html = "";
+  if(sub && sub.is_unlimited){
+    html = '<div class="result-box result-go">✅ You are on an unlimited plan — safe to download.</div>';
+  } else if(remaining === null){
+    html = '<div class="result-box result-wait">ℹ️ Set your plan in Network Settings so I can compare this against your remaining data.</div>';
+  } else if(mb > remaining){
+    html = '<div class="result-box result-no">⛔ This would use more than you have left ('+formatMb(remaining)+'). Wait for Wi-Fi.</div>';
+  } else if(mb > remaining * 0.4){
+    html = '<div class="result-box result-wait">⚠️ This would use a big chunk of your remaining '+formatMb(remaining)+'. Consider Wi-Fi, or proceed with caution.</div>';
+  } else {
+    html = '<div class="result-box result-go">✅ Safe to download — plenty of data left ('+formatMb(remaining)+').</div>';
+  }
+  box.innerHTML = html;
+}
+
+async function logHotspot(){
+  const devices = Number(qs("hsDevices").value) || 0;
+  const minutes = Number(qs("hsMinutes").value) || 0;
+  const mb = Number(qs("hsMb").value) || 0;
+  await api("/hotspot", "POST", { devices_connected: devices, duration_minutes: minutes, mb_used: mb });
+  if(mb > 0) await api("/data", "POST", { app_name: "Hotspot sharing", mb_used: mb });
+  qs("hsDevices").value=""; qs("hsMinutes").value=""; qs("hsMb").value="";
+  loadDashboard();
+}
+
+async function toggleEmergency(){
+  const el = qs("emergencyToggle");
+  const on = !el.classList.contains("on");
+  el.classList.toggle("on", on);
+  const s = state.settings || {};
+  s.emergency_mode = on;
+  await api("/settings", "POST", s);
+  qs("emergencyBanner").style.display = on ? "block" : "none";
+}
+
+/* ---------- AIRTIME ---------- */
+let airtimeType = "topup";
+function setAirtimeType(t){
+  airtimeType = t;
+  qs("chipTopup").classList.toggle("active", t === "topup");
+  qs("chipSpend").classList.toggle("active", t === "spend");
+}
+async function logAirtime(){
+  const amount = Number(qs("airtimeAmount").value);
+  if(!amount || amount <= 0) return;
+  await api("/airtime", "POST", {
+    type: airtimeType,
+    network: qs("airtimeNetwork").value,
+    amount,
+    note: qs("airtimeNote").value.trim() || null
+  });
+  qs("airtimeAmount").value=""; qs("airtimeNote").value="";
+  loadAirtime(); loadDashboard();
+}
+async function loadAirtime(){
+  const r = await api("/airtime");
+  const el = qs("airtimeList");
+  if(!r.ok || !r.logs.length){ el.innerHTML = '<div class="empty-note">No airtime logged yet.</div>'; return; }
+  el.innerHTML = r.logs.slice(0,20).map(l => {
+    const sign = l.type === "topup" ? "+" : "−";
+    const cls = l.type === "topup" ? "badge-green" : "badge-orange";
+    return '<div class="list-row"><div><div class="l-title">'+esc(l.network||"")+' · '+esc(l.note||(l.type==="topup"?"Top-up":"Spend"))+'</div><div class="l-sub">'+(l.logged_at||"").slice(0,16).replace("T"," ")+'</div></div><div class="badge '+cls+'">'+sign+'₦'+l.amount+'</div></div>';
+  }).join("");
+}
+
+/* ---------- BUDGET / HISTORY ---------- */
+function fillBudgetForm(b){
+  qs("budgetDailyData").value = b.daily_data_mb || "";
+  qs("budgetWeeklyData").value = b.weekly_data_mb || "";
+  qs("budgetMonthlyData").value = b.monthly_data_mb || "";
+  qs("budgetDailyAirtime").value = b.daily_airtime || "";
+  qs("budgetWeeklyAirtime").value = b.weekly_airtime || "";
+  qs("budgetMonthlyAirtime").value = b.monthly_airtime || "";
+}
+async function saveBudget(){
+  const b = {
+    daily_data_mb: Number(qs("budgetDailyData").value) || null,
+    weekly_data_mb: Number(qs("budgetWeeklyData").value) || null,
+    monthly_data_mb: Number(qs("budgetMonthlyData").value) || null,
+    daily_airtime: Number(qs("budgetDailyAirtime").value) || null,
+    weekly_airtime: Number(qs("budgetWeeklyAirtime").value) || null,
+    monthly_airtime: Number(qs("budgetMonthlyAirtime").value) || null
+  };
+  await api("/budget", "POST", b);
+  loadDashboard();
+}
+function updateDailyProgress(todayMb, dailyLimit){
+  const bar = qs("progDaily");
+  if(!dailyLimit){ bar.querySelector("div").style.width = "0%"; return; }
+  const pct = Math.min(100, Math.round((todayMb/dailyLimit)*100));
+  bar.querySelector("div").style.width = pct + "%";
+  bar.className = "progress" + (pct >= 100 ? " danger" : pct >= 75 ? " warn" : "");
+}
+async function loadBudgetView(){
+  const r = await api("/summary");
+  if(r.ok && r.budget) { fillBudgetForm(r.budget); updateDailyProgress(r.usage.today_mb, r.budget.daily_data_mb); }
+  const d = await api("/data");
+  const el = qs("historyList");
+  if(!d.ok || !d.logs.length){ el.innerHTML = '<div class="empty-note">No data logged yet.</div>'; return; }
+  el.innerHTML = d.logs.slice(0,30).map(l =>
+    '<div class="list-row"><div><div class="l-title">'+esc(l.app_name||"Usage")+'</div><div class="l-sub">'+(l.logged_at||"").slice(0,16).replace("T"," ")+'</div></div><div>'+formatMb(l.mb_used)+'</div></div>'
+  ).join("");
+}
+
+/* ---------- MORE / NETWORK / NOTIFICATIONS ---------- */
+let unlimitedOn = false;
+function toggleUnlimited(){
+  unlimitedOn = !unlimitedOn;
+  qs("netUnlimitedToggle").classList.toggle("on", unlimitedOn);
+  qs("netDataTotal").style.display = unlimitedOn ? "none" : "block";
+}
+async function saveSubscription(){
+  await api("/subscription", "POST", {
+    network: qs("netNetwork").value,
+    plan_name: qs("netPlanName").value.trim(),
+    plan_cost: Number(qs("netPlanCost").value) || 0,
+    is_unlimited: unlimitedOn,
+    data_total_mb: Number(qs("netDataTotal").value) || 0,
+    start_date: qs("netStartDate").value || null,
+    end_date: qs("netEndDate").value || null
+  });
+  loadDashboard();
+  switchView("dashboard");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === "dashboard"));
+}
+function updateBudgetToggles(s){
+  if(!s) return;
+  qs("notifLowData").classList.toggle("on", !!s.notif_low_data);
+  qs("notifLowAirtime").classList.toggle("on", !!s.notif_low_airtime);
+  qs("notifSubscription").classList.toggle("on", !!s.notif_subscription);
+}
+async function toggleSetting(key){
+  const idMap = { notif_low_data: "notifLowData", notif_low_airtime: "notifLowAirtime", notif_subscription: "notifSubscription" };
+  const el = qs(idMap[key]);
+  const on = !el.classList.contains("on");
+  el.classList.toggle("on", on);
+  const s = state.settings || {};
+  s[key] = on;
+  await api("/settings", "POST", s);
+  if(on && "Notification" in window && Notification.permission === "default") Notification.requestPermission();
+}
+async function loadMore(){
+  qs("profileName").textContent = (state.user && state.user.name) || "DataWise User";
+  qs("profileEmail").textContent = (state.user && state.user.email) || "";
+  const r = await api("/subscription");
+  if(r.ok && r.subscription){
+    const s = r.subscription;
+    qs("netNetwork").value = s.network || "MTN";
+    qs("netPlanName").value = s.plan_name || "";
+    qs("netPlanCost").value = s.plan_cost || "";
+    unlimitedOn = !!s.is_unlimited;
+    qs("netUnlimitedToggle").classList.toggle("on", unlimitedOn);
+    qs("netDataTotal").style.display = unlimitedOn ? "none" : "block";
+    qs("netDataTotal").value = s.data_total_mb || "";
+    qs("netStartDate").value = s.start_date || "";
+    qs("netEndDate").value = s.end_date || "";
+  }
+}
+
+/* Service worker registration */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
