@@ -1,8 +1,12 @@
-const CACHE = "datawise-v1";
+const CACHE = "datawise-v2";
 const ASSETS = ["/", "/index.html", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).catch(()=>{}));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS.map((a) => new Request(a, { cache: "reload" }))))
+      .catch(()=>{})
+  );
   self.skipWaiting();
 });
 
@@ -29,3 +33,4 @@ self.addEventListener("fetch", (e) => {
     })
   );
 });
+        
