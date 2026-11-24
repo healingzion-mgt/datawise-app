@@ -75,5 +75,7 @@ CREATE TABLE IF NOT EXISTS settings (
   dark_mode INTEGER DEFAULT 0,
   notif_low_data INTEGER DEFAULT 1,
   notif_low_airtime INTEGER DEFAULT 1,
-  notif_subscription INTEGER DEFAULT 1
+  notif_subscription INTEGER DEFAULT 1,
+  call_rate REAL DEFAULT 0,
+  sms_rate REAL DEFAULT 0
 );
