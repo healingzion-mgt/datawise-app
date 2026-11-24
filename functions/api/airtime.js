@@ -27,6 +27,38 @@ export async function onRequestPost({ request, env }) {
   return json({ ok: true });
 }
 
+export async function onRequestPatch({ request, env }) {
+  const userId = await getUserId(request, env);
+  if (!userId) return json({ ok: false, error: "Not logged in" }, 401);
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (!id) return json({ ok: false, error: "id required" }, 400);
+
+  const body = await request.json();
+  const amount = Number(body.amount);
+  const type = body.type === "topup" ? "topup" : "spend";
+  if (!amount || amount <= 0) return json({ ok: false, error: "amount must be a positive number" }, 400);
+
+  await env.DB.prepare(
+    `UPDATE airtime_logs SET network=?, type=?, amount=?, note=? WHERE id=? AND user_id=?`
+  ).bind(body.network || null, type, amount, body.note || null, id, userId).run();
+
+  return json({ ok: true });
+}
+
+export async function onRequestDelete({ request, env }) {
+  const userId = await getUserId(request, env);
+  if (!userId) return json({ ok: false, error: "Not logged in" }, 401);
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (!id) return json({ ok: false, error: "id required" }, 400);
+
+  await env.DB.prepare(`DELETE FROM airtime_logs WHERE id=? AND user_id=?`).bind(id, userId).run();
+  return json({ ok: true });
+}
+
 export async function onRequestOptions() {
   return new Response(null, { status: 204 });
-}
+                                      }
