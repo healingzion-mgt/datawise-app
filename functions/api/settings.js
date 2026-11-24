@@ -14,10 +14,11 @@ export async function onRequestPost({ request, env }) {
 
   const s = await request.json();
   await env.DB.prepare(
-    `UPDATE settings SET emergency_mode=?, dark_mode=?, notif_low_data=?, notif_low_airtime=?, notif_subscription=? WHERE user_id=?`
+    `UPDATE settings SET emergency_mode=?, dark_mode=?, notif_low_data=?, notif_low_airtime=?, notif_subscription=?, call_rate=?, sms_rate=? WHERE user_id=?`
   ).bind(
     s.emergency_mode ? 1 : 0, s.dark_mode ? 1 : 0,
     s.notif_low_data ? 1 : 0, s.notif_low_airtime ? 1 : 0, s.notif_subscription ? 1 : 0,
+    Number(s.call_rate) || 0, Number(s.sms_rate) || 0,
     userId
   ).run();
 
